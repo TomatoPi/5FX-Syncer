@@ -1,8 +1,8 @@
 #pragma once
 
-namespace sfx {
-    
-    class engine {
+#include "types.hpp"
 
-    };
+namespace sfx {
+
+    
 }

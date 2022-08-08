@@ -24,21 +24,21 @@ namespace sfx {
             std::string         path;
             std::vector<data>   arguments;
         };
-        /*constexpr*/ bool operator== (const osc& a, const osc& b) { return a.path == b.path && a.arguments == b.arguments; }
-        /*constexpr*/ bool operator!= (const osc& a, const osc& b) { return a.path != b.path || a.arguments != b.arguments; }
-        /*constexpr*/ bool operator<  (const osc& a, const osc& b) { return a.path <  b.path && a.arguments <  b.arguments; }
+        /*constexpr*/ inline bool operator== (const osc& a, const osc& b) { return a.path == b.path && a.arguments == b.arguments; }
+        /*constexpr*/ inline bool operator!= (const osc& a, const osc& b) { return a.path != b.path || a.arguments != b.arguments; }
+        /*constexpr*/ inline bool operator<  (const osc& a, const osc& b) { return a.path <  b.path && a.arguments <  b.arguments; }
 
         namespace internal {
 
             struct play { std::string pattern; };
-            /*constexpr*/ bool operator== (const play& a, const play& b) { return a.pattern == b.pattern; }
-            /*constexpr*/ bool operator!= (const play& a, const play& b) { return a.pattern != b.pattern; }
-            /*constexpr*/ bool operator<  (const play& a, const play& b) { return a.pattern <  b.pattern; }
+            /*constexpr*/ inline bool operator== (const play& a, const play& b) { return a.pattern == b.pattern; }
+            /*constexpr*/ inline bool operator!= (const play& a, const play& b) { return a.pattern != b.pattern; }
+            /*constexpr*/ inline bool operator<  (const play& a, const play& b) { return a.pattern <  b.pattern; }
 
             struct stop { std::string pattern; };
-            /*constexpr*/ bool operator== (const stop& a, const stop& b) { return a.pattern == b.pattern; }
-            /*constexpr*/ bool operator!= (const stop& a, const stop& b) { return a.pattern != b.pattern; }
-            /*constexpr*/ bool operator<  (const stop& a, const stop& b) { return a.pattern <  b.pattern; }
+            /*constexpr*/ inline bool operator== (const stop& a, const stop& b) { return a.pattern == b.pattern; }
+            /*constexpr*/ inline bool operator!= (const stop& a, const stop& b) { return a.pattern != b.pattern; }
+            /*constexpr*/ inline bool operator<  (const stop& a, const stop& b) { return a.pattern <  b.pattern; }
 
             using any = std::variant<play, stop>;
         }
