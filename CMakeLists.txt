@@ -4,11 +4,19 @@ project(5FX-Syncer VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(HEADERS )
-set(SOURCES src/5FX-Syncer.cpp)
+set(HEADERS 
+    src/core/engine.hpp
+    src/core/types.hpp
+)
+set(SOURCES 
+    src/5FX-Syncer.cpp
+)
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 # target_link_libraries(${PROJECT_NAME} JackWrap)
 # target_link_libraries(${PROJECT_NAME} NSMWrap)
-target_link_libraries(${PROJECT_NAME} jack)
+# target_link_libraries(${PROJECT_NAME} jack)
+
+add_executable(TestSyncerCore src/core/types.hpp tests/core.cpp)
+add_test(NAME TestSyncerCore COMMAND TestSyncerCore)
