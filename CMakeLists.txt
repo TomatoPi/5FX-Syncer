@@ -20,3 +20,6 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 add_executable(TestSyncerCore src/core/types.hpp tests/core.cpp)
 add_test(NAME TestSyncerCore COMMAND TestSyncerCore)
+
+add_executable(TestSyncerLoad src/core/types.hpp src/core/load.hpp src/core/load.cpp tests/load.cpp)
+add_test(NAME TestSyncerLoad COMMAND TestSyncerLoad)
