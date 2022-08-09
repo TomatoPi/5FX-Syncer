@@ -7,9 +7,9 @@ int main(int argc, char * const argv[])
 {
     using namespace sfx;
 
-    event::any noteon   = event::midi{std::byte{0x80}, std::byte{0x67}, std::byte{0x34}};
-    event::any noteoff  = event::midi{std::byte{0x90}, std::byte{0x67}, std::byte{0x0}};
-    event::any cc       = event::midi{std::byte{0xb8}, std::byte{0x40}, std::byte{0x7f}};
+    event::any noteon   = event::midi{{std::byte{0x80}, std::byte{0x67}, std::byte{0x34}}};
+    event::any noteoff  = event::midi{{std::byte{0x90}, std::byte{0x67}, std::byte{0x0}}};
+    event::any cc       = event::midi{{std::byte{0xb8}, std::byte{0x40}, std::byte{0x7f}}};
 
     assert(noteon != noteoff);
     assert(cc != noteoff);

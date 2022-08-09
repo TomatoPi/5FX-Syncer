@@ -15,7 +15,13 @@ namespace sfx {
      */
     namespace event {
 
-        using midi = std::vector<std::byte>;
+        struct midi {
+            std::vector<std::byte> datas;
+        };
+        /*constexpr*/ inline bool operator== (const midi& a, const midi& b) { return a.datas == b.datas; }
+        /*constexpr*/ inline bool operator!= (const midi& a, const midi& b) { return a.datas != b.datas; }
+        /*constexpr*/ inline bool operator<  (const midi& a, const midi& b) { return a.datas <  b.datas; }
+
 
         struct osc {
             using blob = std::vector<std::byte>;
