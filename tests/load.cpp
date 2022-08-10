@@ -25,18 +25,17 @@ int main(int argc, char * const argv[])
     event::any nsmkill2 = event::osc{"/nsm/server/kill", {"pouet haha", event::osc::blob({std::byte{0x10}, std::byte{0x20}})}};
     event::any mixgain  = event::osc{"/mixer/set/gain", {17, 0.5f}};
 
-    assert("O /nsm/server/kill"                             == w(nsmkill).str());   oss = std::ostringstream{};
-    std::cout << "'" << w(nsmkill2).str() << "'" << std::endl;
-    assert("O /nsm/server/kill sb \"pouet haha\" [ 0x10 0x20 ]"  == w(nsmkill2).str());  oss = std::ostringstream{};
-    assert("O /mixer/set/gain 17 0.500000"                  == w(mixgain).str());   oss = std::ostringstream{};
+    assert("O /nsm/server/kill" == w(nsmkill).str());                                   oss = std::ostringstream{};
+    assert("O /nsm/server/kill sb \"pouet haha\" [ 0x10 0x20 ]" == w(nsmkill2).str());  oss = std::ostringstream{};
+    assert("O /mixer/set/gain if 17 0.500000" == w(mixgain).str());                     oss = std::ostringstream{};
 
-    // event::any playloopback = event::internal::play{"loopback"};
-    // event::any playsynth    = event::internal::play{"synth"};
-    // event::any stoploopback = event::internal::stop{"loopback"};
+    event::any playloopback = event::internal::play{"loopback"};
+    event::any playsynth    = event::internal::play{"synth"};
+    event::any stoploopback = event::internal::stop{"loopback"};
 
-    // assert("I play loopback" == to_string(playloopback));
-    // assert("I play synth"    == to_string(playsynth));
-    // assert("I stop loopback" == to_string(stoploopback));
+    assert("I play \"loopback\"" == w(playloopback).str()); oss = std::ostringstream{};
+    assert("I play \"synth\""    == w(playsynth).str());    oss = std::ostringstream{};
+    assert("I stop \"loopback\"" == w(stoploopback).str()); oss = std::ostringstream{};
 
     // /* De-serialisation */
 
