@@ -11,8 +11,10 @@ int main(int argc, char * const argv[])
     event::any noteoff  = event::midi{{std::byte{0x90}, std::byte{0x67}, std::byte{0x0}}};
     event::any cc       = event::midi{{std::byte{0xb8}, std::byte{0x40}, std::byte{0x7f}}};
 
+    assert(noteon == noteon);
     assert(noteon != noteoff);
     assert(cc != noteoff);
+    assert(noteon < noteoff);
 
     event::any nsmkill  = event::osc{"/nsm/server/kill", {}};
     event::any nsmkill2 = event::osc{"/nsm/server/kill", {}};
@@ -20,8 +22,8 @@ int main(int argc, char * const argv[])
 
     assert(nsmkill == nsmkill2);
     assert(nsmkill != mixgain);
-    assert(mixgain == mixgain);
     assert(cc != nsmkill);
+    assert(nsmkill < mixgain);
 
     event::any playloopback     = event::internal::play{"loopback"};
     event::any playloopback2    = event::internal::play{"loopback"};
@@ -30,6 +32,10 @@ int main(int argc, char * const argv[])
     assert(playloopback == playloopback2);
     assert(playloopback != stoploopback);
     assert(nsmkill != stoploopback);
+    assert(playloopback < stoploopback);
+
+    assert(noteon < nsmkill);
+    assert(nsmkill < playloopback);
 
     timestamp a{8}, b{8}, c{16}, x{-1};
 
