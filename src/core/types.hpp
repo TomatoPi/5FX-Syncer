@@ -16,7 +16,8 @@ namespace sfx {
     namespace event {
 
         struct midi {
-            std::vector<std::byte> datas;
+            using data_type = std::vector<std::byte>;
+            data_type datas;
         };
         /*constexpr*/ inline bool operator== (const midi& a, const midi& b) { return a.datas == b.datas; }
         /*constexpr*/ inline bool operator!= (const midi& a, const midi& b) { return a.datas != b.datas; }
