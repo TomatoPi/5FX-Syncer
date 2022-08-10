@@ -5,8 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(HEADERS 
-    src/core/engine.hpp
     src/core/types.hpp
+    src/core/engine.hpp
+    src/core/hio.hpp
 )
 set(SOURCES 
     src/5FX-Syncer.cpp
@@ -21,5 +22,8 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 add_executable(TestSyncerCore src/core/types.hpp tests/core.cpp)
 add_test(NAME TestSyncerCore COMMAND TestSyncerCore)
 
-add_executable(TestSyncerLoad src/core/types.hpp src/core/hio.hpp src/core/hio.cpp tests/load.cpp)
+add_executable(TestSyncerEngine src/core/types.hpp src/core/engine.hpp tests/engine.cpp)
+add_test(NAME TestSyncerEngine COMMAND TestSyncerEngine)
+
+add_executable(TestSyncerLoad src/core/types.hpp src/core/hio.hpp tests/load.cpp)
 add_test(NAME TestSyncerLoad COMMAND TestSyncerLoad)

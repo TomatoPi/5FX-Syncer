@@ -1,9 +1,10 @@
 #pragma once
 
 #include <map>
+#include <limits>
 #include <string>
 #include <vector>
-#include <cstddef>
+#include <cstddef> // std::byte
 #include <variant>
 #include <functional>
 
@@ -57,7 +58,12 @@ namespace sfx {
             /*constexpr*/ inline bool operator!= (const stop& a, const stop& b) { return a.pattern != b.pattern; }
             /*constexpr*/ inline bool operator<  (const stop& a, const stop& b) { return a.pattern <  b.pattern; }
 
-            using any = std::variant<tick, play, resume, stop>;
+            struct end {};
+            /*constexpr*/ inline bool operator== (const end&, const end&) { return true; }
+            /*constexpr*/ inline bool operator!= (const end&, const end&) { return false; }
+            /*constexpr*/ inline bool operator<  (const end&, const end&) { return false; }
+
+            using any = std::variant<tick, play, resume, stop, end>;
         }
 
         using any = std::variant<midi, osc, internal::any>;
@@ -67,11 +73,16 @@ namespace sfx {
      * @brief Timestamp
      * 
      */
-    struct timestamp { float tick; };
+    struct timestamp
+    {
+        float tick;
+        static constexpr timestamp end() { return timestamp{std::numeric_limits<float>::max()}; }
+    };
     constexpr timestamp operator+ (timestamp a, timestamp b) { return {a.tick + b.tick}; }
     constexpr timestamp operator- (timestamp a, timestamp b) { return {a.tick - b.tick}; }
     constexpr timestamp operator* (timestamp a, int x) { return {a.tick * x}; }
     constexpr timestamp operator/ (timestamp a, int x) { return {a.tick / x}; }
+    constexpr timestamp& operator++ (timestamp& a) { a.tick += 1; return a; }
     constexpr bool operator== (timestamp a, timestamp b) { return a.tick == b.tick; }
     constexpr bool operator<  (timestamp a, timestamp b) { return a.tick <  b.tick; }
 
@@ -86,8 +97,13 @@ namespace sfx {
      * 
      */
     struct pattern {
-        std::string                             name;
-        std::multimap<timestamp, event::any>    events;
+        using list = std::multimap<timestamp, event::any>;
+        using iterator = list::iterator;
+
+        std::string name;
+        list        events;
+
+        pattern(std::string name = std::string{}) : name{name}, events{{timestamp::end(), event::internal::end{}}} {}
     };
 
     /**
@@ -102,3 +118,10 @@ namespace sfx {
         translator  t;
     };
 }
+
+/* STD Functors overload */
+
+template <> struct std::hash<sfx::channel>
+    { /*constexpr*/ std::size_t operator() (const sfx::channel& c) const { return std::hash<std::string>{}(c.name); } };
+template <> struct std::hash<sfx::pattern>
+    { /*constexpr*/ std::size_t operator() (const sfx::pattern& p) const { return std::hash<std::string>{}(p.name); } };
