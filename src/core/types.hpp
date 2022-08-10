@@ -37,17 +37,27 @@ namespace sfx {
 
         namespace internal {
 
+            struct tick {};
+            /*constexpr*/ inline bool operator== (const tick&, const tick&) { return true; }
+            /*constexpr*/ inline bool operator!= (const tick&, const tick&) { return false; }
+            /*constexpr*/ inline bool operator<  (const tick&, const tick&) { return false; }
+
             struct play { std::string pattern; };
             /*constexpr*/ inline bool operator== (const play& a, const play& b) { return a.pattern == b.pattern; }
             /*constexpr*/ inline bool operator!= (const play& a, const play& b) { return a.pattern != b.pattern; }
             /*constexpr*/ inline bool operator<  (const play& a, const play& b) { return a.pattern <  b.pattern; }
+
+            struct resume {};
+            /*constexpr*/ inline bool operator== (const resume&, const resume&) { return true; }
+            /*constexpr*/ inline bool operator!= (const resume&, const resume&) { return false; }
+            /*constexpr*/ inline bool operator<  (const resume&, const resume&) { return false; }
 
             struct stop { std::string pattern; };
             /*constexpr*/ inline bool operator== (const stop& a, const stop& b) { return a.pattern == b.pattern; }
             /*constexpr*/ inline bool operator!= (const stop& a, const stop& b) { return a.pattern != b.pattern; }
             /*constexpr*/ inline bool operator<  (const stop& a, const stop& b) { return a.pattern <  b.pattern; }
 
-            using any = std::variant<play, stop>;
+            using any = std::variant<tick, play, resume, stop>;
         }
 
         using any = std::variant<midi, osc, internal::any>;

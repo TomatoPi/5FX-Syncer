@@ -83,8 +83,12 @@ namespace sfx {
 
                 /* Internal Events */
 
+                stream_type& operator() (const event::internal::tick& e)
+                    { os << "tick"; return os; }
                 stream_type& operator() (const event::internal::play& e)
                     { os << "play "; return (*this)(e.pattern); }
+                stream_type& operator() (const event::internal::resume& e)
+                    { os << "resume"; return os; }
                 stream_type& operator() (const event::internal::stop& e)
                     { os << "stop "; return (*this)(e.pattern); }
             };
@@ -178,15 +182,21 @@ namespace sfx {
                     std::string type;
                     is >> std::ws >> type;
 
+                    if (type == "tick") return static_cast<event::internal::tick>(*this);
                     if (type == "play") return static_cast<event::internal::play>(*this);
+                    if (type == "resume") return static_cast<event::internal::resume>(*this);
                     if (type == "stop") return static_cast<event::internal::stop>(*this);
                     throw std::runtime_error("Invalid internal event type");
                 }
 
                 /* Internal Events */
 
+                explicit operator event::internal::tick ()
+                    { return event::internal::tick{}; }
                 explicit operator event::internal::play ()
                     { return event::internal::play{static_cast<std::string>(*this)}; }
+                explicit operator event::internal::resume ()
+                    { return event::internal::resume{}; }
                 explicit operator event::internal::stop ()
                     { return event::internal::stop{static_cast<std::string>(*this)}; }
             };

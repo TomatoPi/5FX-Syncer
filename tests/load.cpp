@@ -33,10 +33,14 @@ int main(int argc, char * const argv[])
     event::any playloopback = event::internal::play{"loopback"};
     event::any playsynth    = event::internal::play{"synth"};
     event::any stoploopback = event::internal::stop{"loopback"};
+    event::any tick         = event::internal::tick{};
+    event::any resume       = event::internal::resume{};
 
     assert("I play \"loopback\"" == w(playloopback).str()); oss = std::ostringstream{};
     assert("I play \"synth\""    == w(playsynth).str());    oss = std::ostringstream{};
     assert("I stop \"loopback\"" == w(stoploopback).str()); oss = std::ostringstream{};
+    assert("I tick" == w(tick).str());      oss = std::ostringstream{};
+    assert("I resume" == w(resume).str());  oss = std::ostringstream{};
 
     /* De-serialisation */
 
@@ -46,7 +50,7 @@ int main(int argc, char * const argv[])
     iss = std::istringstream{"12"};         assert(12 == static_cast<int32_t>(r));
     iss = std::istringstream{"15.5"};       assert(15.5f == static_cast<float>(r));
     iss = std::istringstream{"\"Tomato\""}; assert("Tomato" == static_cast<std::string>(r));
-    iss = std::istringstream{"0x80"};     assert(std::byte{0x80} == static_cast<std::byte>(r));
+    iss = std::istringstream{"0x80"};       assert(std::byte{0x80} == static_cast<std::byte>(r));
 
     iss = std::istringstream{"[ 1 2 3 ]"};  assert(std::vector<int32_t>({1, 2, 3}) == static_cast<std::vector<int32_t>>(r));
 
@@ -61,11 +65,13 @@ int main(int argc, char * const argv[])
     iss = std::istringstream{"I play \"loopback\""};    assert(playloopback == static_cast<event::any>(r));
     iss = std::istringstream{"I play \"synth\""};       assert(playsynth == static_cast<event::any>(r));
     iss = std::istringstream{"I stop \"loopback\""};    assert(stoploopback == static_cast<event::any>(r));
+    iss = std::istringstream{"I tick"};                 assert(tick == static_cast<event::any>(r));
+    iss = std::istringstream{"I resume"};               assert(resume == static_cast<event::any>(r));
 
     /* De-serialisation robustness test */
 
-    iss = std::istringstream{"   12"};      assert(12 == static_cast<int32_t>(r));
-    iss = std::istringstream{"\t0x80"};     assert(std::byte{0x80} == static_cast<std::byte>(r));
+    iss = std::istringstream{"   12"};          assert(12 == static_cast<int32_t>(r));
+    iss = std::istringstream{"\t0x80"};         assert(std::byte{0x80} == static_cast<std::byte>(r));
     iss = std::istringstream{"\n[ 1 2 \t3 ]"};  assert(std::vector<int32_t>({1, 2, 3}) == static_cast<std::vector<int32_t>>(r));
 
     iss = std::istringstream{"\t O \t/nsm/server/kill     {\n sb \"pouet haha\" [ 0x10 \t\t0x20 ] }"}; assert(nsmkill2 == static_cast<event::any>(r));
