@@ -1,9 +1,11 @@
 #pragma once
 
-#include <vector>
+#include <algorithm>
 
 namespace sfx {
     namespace interval {
+
+        /* Interval definition */
 
         template <typename T>
         struct interval
@@ -16,6 +18,15 @@ namespace sfx {
         };
 
         template <typename T>
+        constexpr bool operator== (interval<T> a, interval<T> b) noexcept
+            { 
+                return (!static_cast<bool>(a) && !static_cast<bool>(b)) 
+                    || (a.begin == b.begin && a.end == b.end);
+            }
+
+        /* Intervals modifiers */
+
+        template <typename T>
         struct shift
         {
             T diff;
@@ -24,18 +35,31 @@ namespace sfx {
         };
 
         template <typename T>
-        struct contains
-        {
-            T val;
-            constexpr bool operator() (interval<T> i) const noexcept
-                { return i.begin <= val && val < i.end; }
-        };
-
-        template <typename T>
         struct intersect
         {
             constexpr interval<T> operator() (interval<T> a, interval<T> b) const noexcept
                 { return interval<T>{std::max(a.begin, b.begin), std::min(a.end, b.end)}; }
+        };
+
+        /* Intervals lookup */
+
+        template <typename T>
+        struct contains
+        {
+            interval<T> i;
+            constexpr bool operator() (T t) const noexcept
+                { return i.begin <= t && t < i.end; }
+        };
+
+        template <typename T>
+        struct include
+        {
+            interval<T> i;
+            constexpr bool operator() (interval<T> u) const noexcept
+            {
+                return !static_cast<bool>(u)
+                    || (contains{i}(u.begin) && contains{i}(u.end));
+            }
         };
     }
 }
