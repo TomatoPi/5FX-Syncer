@@ -19,6 +19,9 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 # target_link_libraries(${PROJECT_NAME} NSMWrap)
 # target_link_libraries(${PROJECT_NAME} jack)
 
+add_executable(TestSyncerTime src/core/time.hpp tests/time.cpp)
+add_test(NAME TestSyncerTime COMMAND TestSyncerTime)
+
 add_executable(TestSyncerInterval src/core/interval.hpp tests/interval.cpp)
 add_test(NAME TestSyncerInterval COMMAND TestSyncerInterval)
 
