@@ -16,8 +16,8 @@ int main(int argc, char * const argv[])
 
     constexpr framestamp one_sec_f_48{48000, _48kHz};  /* 48k samples at 48kHz == 1s */
     constexpr framestamp one_sec_f_96{96000, _96kHz};  /* 48k samples at 48kHz == 1s */
-    constexpr tickstamp one_sec_t_60{24, _60bpm};   /* 24 ticks == 1beat == 1s at 60bpm */
-    constexpr tickstamp one_sec_t_120{48, _120bpm}; /* 48 ticks == 2beat == 1s at 120bpm */
+    constexpr tickstamp one_sec_t_60{960, _60bpm};   /* 24 ticks == 1beat == 1s at 60bpm */
+    constexpr tickstamp one_sec_t_120{1920, _120bpm}; /* 48 ticks == 2beat == 1s at 120bpm */
 
     BIASSERT(_48kHz == 48_kHz);
     BIASSERT(_48kHz == 48000_Hz);
@@ -27,13 +27,13 @@ int main(int argc, char * const argv[])
 
     BIASSERT(tick_to_frame(one_sec_t_60, _48kHz).value == 48'000);
     BIASSERT(tick_to_frame(one_sec_t_120, _48kHz).value == 48'000);
-    BIASSERT(frame_to_tick(one_sec_f_48, _60bpm).value == 24);
-    BIASSERT(frame_to_tick(one_sec_f_48, _120bpm).value == 48);
+    BIASSERT(frame_to_tick(one_sec_f_48, _60bpm).value == 960);
+    BIASSERT(frame_to_tick(one_sec_f_48, _120bpm).value == 1920);
 
     BIASSERT(remap<framestamp>(one_sec_f_48, _96kHz).value == 96'000);
     BIASSERT(remap<framestamp>(one_sec_f_96, _48kHz).value == 48'000);
-    BIASSERT(remap<tickstamp>(one_sec_t_60, _120bpm).value == 48);
-    BIASSERT(remap<tickstamp>(one_sec_t_120, _60bpm).value == 24);
+    BIASSERT(remap<tickstamp>(one_sec_t_60, _120bpm).value == 1920);
+    BIASSERT(remap<tickstamp>(one_sec_t_120, _60bpm).value == 960);
 
     /* Check numeric stability at highest samplerate */
 
@@ -47,10 +47,10 @@ int main(int argc, char * const argv[])
     BIASSERT(remap<framestamp>(framestamp{24'883'200'000, 96_kHz},  196_kHz).value == 50'803'200'000);
     BIASSERT(remap<framestamp>(framestamp{12'441'600'000, 48_kHz},  196_kHz).value == 50'803'200'000);
 
-    BIASSERT(tick_to_frame(tickstamp{6'220'800,  60_bpm}, 196_kHz).value  == 50'803'200'000);
-    BIASSERT(tick_to_frame(tickstamp{24'883'200, 240_bpm}, 196_kHz).value == 50'803'200'000);
+    BIASSERT(tick_to_frame(tickstamp{248'832'000,  60_bpm}, 196_kHz).value  == 50'803'200'000);
+    BIASSERT(tick_to_frame(tickstamp{995'328'000, 240_bpm}, 196_kHz).value == 50'803'200'000);
 
-    BIASSERT(frame_to_tick(framestamp{50'803'200'000, 196_kHz}, 240_bpm).value == 24'883'200);
+    BIASSERT(frame_to_tick(framestamp{50'803'200'000, 196_kHz}, 240_bpm).value == 995'328'000);
 
     /* Test relational operators */
 

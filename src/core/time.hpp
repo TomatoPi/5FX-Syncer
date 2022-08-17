@@ -6,10 +6,10 @@
 namespace sfx {
     namespace time {
 
-        struct tick : strong_type<std::intmax_t, tick> {};
+        struct tick : strong_type<std::uint32_t, tick> {};
         struct bpm  : strong_type<float, bpm> {
-            /** 1BPM == 24 ticks per 60 seconds (Hardcoded 24PPQN) */
-            using base = std::ratio<24, 60>;
+            /** 1BPM == 960 ticks per 60 seconds (Hardcoded 960PPQN) */
+            using base = std::ratio<960, 60>;
         };
         constexpr bpm operator"" _bpm(long double b)
             { return bpm{static_cast<bpm::type>(b)}; }
