@@ -51,9 +51,11 @@ namespace sfx {
         template <typename T>
         constexpr auto remap = convert<typename T::repr, typename T::rate, typename T::repr, typename T::rate>;
 
-        struct syncpoint {
-            ticktime    t;
-            frametime   f;
-        };
+        // constexpr bool operator<
+
+        // struct syncpoint {
+        //     ticktime    t;
+        //     frametime   f;
+        // };
     }
 }
