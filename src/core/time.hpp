@@ -6,7 +6,7 @@
 namespace sfx {
     namespace time {
 
-        struct tick : strong_type<float, tick> {};
+        struct tick : strong_type<std::intmax_t, tick> {};
         struct bpm  : strong_type<float, bpm> {
             /** 1BPM == 24 ticks per 60 seconds (Hardcoded 24PPQN) */
             using base = std::ratio<24, 60>;
@@ -51,11 +51,47 @@ namespace sfx {
         template <typename T>
         constexpr auto remap = convert<typename T::repr, typename T::rate, typename T::repr, typename T::rate>;
 
-        // constexpr bool operator<
+        /**
+         * @brief Takes two timestamps and remap them to the gcd of rate a and b
+         * @return a pair of timestamps (a', b') remaped to a rate of max(a.rate, b.rate)
+         * @note It may exist some corner cases where two slightly different timestamps are aliased as equals
+         */
+        template <typename T>
+        constexpr std::pair<T, T> align_rate(T a, T b)
+        {
+            if (a.base == b.base)
+                return {a, b};
+            if (a.base < b.base)
+                return {remap<T>(a, b.base), b};
+            else
+                return {a, remap<T>(b, a.base)};
+        }
 
-        // struct syncpoint {
-        //     ticktime    t;
-        //     frametime   f;
-        // };
+        template <typename Repr, typename Rate>
+        constexpr bool operator== (timestamp<Repr, Rate> a, timestamp<Repr, Rate> b)
+        {
+            auto [a_, b_] = align_rate(a, b);
+            return a_.value == b_.value;
+        }
+
+        template <typename Repr, typename Rate>
+        constexpr bool operator< (timestamp<Repr, Rate> a, timestamp<Repr, Rate> b)
+        {
+            auto [a_, b_] = align_rate(a, b);
+            return a_.value < b_.value;
+        }
+
+        template <typename T>
+        struct interval {
+            T begin;
+            T end;
+        };
+
+        struct syncpoint {
+            ticktime    t;
+            frametime   f;
+        };
+
+        using syncinterval = interval<syncpoint>;
     }
 }

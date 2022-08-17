@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cassert>
 
-#define BIASSERT(expr) static_assert(expr); assert(expr);
+#define BIASSERT(expr) static_assert(expr); assert((expr));
 
 int main(int argc, char * const argv[])
 {
@@ -51,6 +51,31 @@ int main(int argc, char * const argv[])
     BIASSERT(tick_to_frame(ticktime{24'883'200, 240_bpm}, 196_kHz).value == 50'803'200'000);
 
     BIASSERT(frame_to_tick(frametime{50'803'200'000, 196_kHz}, 240_bpm).value == 24'883'200);
+
+    /* Test relational operators */
+
+    BIASSERT((frametime{0, 48_kHz} == frametime{0, 196_kHz}) && true);
+    BIASSERT((frametime{196'000, 196_kHz} == frametime{48'000, 48_kHz}) && true);
+    BIASSERT((frametime{44'100, 44'100_Hz} == frametime{48'000, 48_kHz}) && true);
+    BIASSERT((frametime{24'000, 44'100_Hz} < frametime{48'000, 48_kHz}) && true);
+    BIASSERT((frametime{96'000, 196'000_Hz} < frametime{40'000, 48_kHz}) && true);
+
+    BIASSERT(!(frametime{95'999, 96_kHz} == frametime{47'999, 48_kHz}) && true);
+    BIASSERT(!(frametime{95'999, 96_kHz} < frametime{47'999, 48_kHz}) && true);
+
+    BIASSERT((ticktime{0, 120_bpm}  == ticktime{0, 240_bpm}) && true);
+    BIASSERT((ticktime{60, 120_bpm} == ticktime{120, 240_bpm}) && true);
+    BIASSERT((ticktime{90, 120_bpm} == ticktime{180, 240_bpm}) && true);
+    BIASSERT((ticktime{90, 120_bpm} < ticktime{200, 240_bpm}) && true);
+    BIASSERT((ticktime{66, 240_bpm} < ticktime{55, 60_bpm}) && true);
+
+    /* Test sync utils */
+
+    constexpr syncpoint zero{ticktime{0, 60_bpm}, frametime{0, 48_kHz}};
+    constexpr syncpoint one{ticktime{24, 60_bpm}, frametime{48'000, 48_kHz}};
+    constexpr syncinterval in{zero, one};
+
+    
 
     return 0;
 }
