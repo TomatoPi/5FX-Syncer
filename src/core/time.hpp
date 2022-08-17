@@ -16,8 +16,8 @@ namespace sfx {
         constexpr bpm operator"" _bpm(unsigned long long int b)
             { return bpm{static_cast<bpm::type>(b)}; }
         
-        struct frame        : strong_type<uint32_t, frame> {};
-        struct samplerate   : strong_type<uint32_t, samplerate> {
+        struct frame        : strong_type<std::intmax_t, frame> {};
+        struct samplerate   : strong_type<std::intmax_t, samplerate> {
             /**< 1Hz == 1 frame per 1 second */
             using base = std::ratio<1,1>;
         };
@@ -47,5 +47,13 @@ namespace sfx {
 
         constexpr auto frame_to_tick = convert<tick, bpm, frame, samplerate>;
         constexpr auto tick_to_frame = convert<frame, samplerate, tick, bpm>;
+
+        template <typename T>
+        constexpr auto remap = convert<typename T::repr, typename T::rate, typename T::repr, typename T::rate>;
+
+        struct syncpoint {
+            ticktime    t;
+            frametime   f;
+        };
     }
 }
