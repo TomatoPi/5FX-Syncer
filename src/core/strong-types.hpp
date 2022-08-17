@@ -64,27 +64,27 @@ struct strong_type {
 
 // Arithmetic operators
     constexpr friend strong_type operator+(strong_type a, strong_type b) { return {a.v + b.v}; }
-    constexpr friend strong_type operator+(strong_type a, Type &&b) { return {a.v + b}; }
+    constexpr friend strong_type operator+(strong_type a, Type b) { return {a.v + b}; }
     constexpr friend strong_type operator-(strong_type a, strong_type b) { return {a.v - b.v}; }
-    constexpr friend strong_type operator-(strong_type a, Type &&b) { return {a.v - b}; }
+    constexpr friend strong_type operator-(strong_type a, Type b) { return {a.v - b}; }
 
     constexpr friend strong_type operator*(strong_type a, strong_type b) { return {a.v * b.v}; }
-    constexpr friend strong_type operator*(strong_type a, Type &&b) { return {a.v * b}; }
+    constexpr friend strong_type operator*(strong_type a, Type b) { return {a.v * b}; }
     constexpr friend strong_type operator/(strong_type a, strong_type b) { return {a.v / b.v}; }
-    constexpr friend strong_type operator/(strong_type a, Type &&b) { return {a.v / b}; }
+    constexpr friend strong_type operator/(strong_type a, Type b) { return {a.v / b}; }
     constexpr friend strong_type operator%(strong_type a, strong_type b) { return {a.v % b.v}; }
-    constexpr friend strong_type operator%(strong_type a, Type &&b) { return {a.v % b}; }
+    constexpr friend strong_type operator%(strong_type a, Type b) { return {a.v % b}; }
 // Shortcut arithmetic operators
     constexpr friend strong_type& operator+=(strong_type &a, strong_type b) { a.v += b.v; return a; }
-    constexpr friend strong_type& operator+=(strong_type &a, Type &&b) { a.v += b; return a; }
+    constexpr friend strong_type& operator+=(strong_type &a, Type b) { a.v += b; return a; }
     constexpr friend strong_type& operator-=(strong_type &a, strong_type b) { a.v -= b.v; return a; }
-    constexpr friend strong_type& operator-=(strong_type &a, Type &&b){ a.v -= b; return a; }
+    constexpr friend strong_type& operator-=(strong_type &a, Type b){ a.v -= b; return a; }
     constexpr friend strong_type& operator*=(strong_type &a, strong_type b) { a *= b; return a; }
-    constexpr friend strong_type& operator*=(strong_type &a, Type &&b) { a.v *= b; return a; }
+    constexpr friend strong_type& operator*=(strong_type &a, Type b) { a.v *= b; return a; }
     constexpr friend strong_type& operator/=(strong_type &a, strong_type b) { a /= b; return a; }
-    constexpr friend strong_type& operator/=(strong_type &a, Type &&b) { a.v /= b; return a; }
+    constexpr friend strong_type& operator/=(strong_type &a, Type b) { a.v /= b; return a; }
     constexpr friend strong_type& operator%=(strong_type &a, strong_type b) { a %= b; return a; }
-    constexpr friend strong_type& operator%=(strong_type &a, Type &&b) { a.v %= b; return a; }
+    constexpr friend strong_type& operator%=(strong_type &a, Type b) { a.v %= b; return a; }
     constexpr friend strong_type& operator++(strong_type &a) { ++a.v; return a; }
     constexpr friend strong_type operator++(strong_type &a, int) { return strong_type{a.v++}; }
     constexpr friend strong_type& operator--(strong_type &a) { --a.v; return a; }
@@ -92,16 +92,16 @@ struct strong_type {
 
 // Comparison operators
     constexpr friend bool operator==(strong_type a, strong_type b) { return a.v == b.v; }
-    constexpr friend bool operator==(strong_type a, Type &&b) { return a.v == b; }
+    constexpr friend bool operator==(strong_type a, Type b) { return a.v == b; }
     constexpr friend bool operator!=(strong_type a, strong_type b) { return a.v != b.v; }
-    constexpr friend bool operator!=(strong_type a, Type &&b) { return a.v != b; }
+    constexpr friend bool operator!=(strong_type a, Type b) { return a.v != b; }
     constexpr friend bool operator<(strong_type a, strong_type b) { return a.v < b.v; }
-    constexpr friend bool operator<(strong_type a, Type &&b) { return a.v < b; }
+    constexpr friend bool operator<(strong_type a, Type b) { return a.v < b; }
     constexpr friend bool operator>(strong_type a, strong_type b) { return a.v > b.v; }
-    constexpr friend bool operator>(strong_type a, Type &&b) { return a.v > b; }
+    constexpr friend bool operator>(strong_type a, Type b) { return a.v > b; }
     constexpr friend bool operator<=(strong_type a, strong_type b) { return a.v <= b.v; }
-    constexpr friend bool operator<=(strong_type a, Type &&b) { return a.v <= b; }
+    constexpr friend bool operator<=(strong_type a, Type b) { return a.v <= b; }
     constexpr friend bool operator>=(strong_type a, strong_type b) { return a.v >= b.v; }
-    constexpr friend bool operator>=(strong_type a, Type &&b) { return a.v >= b; }
+    constexpr friend bool operator>=(strong_type a, Type b) { return a.v >= b; }
 };
 #endif
