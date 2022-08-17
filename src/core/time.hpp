@@ -34,8 +34,8 @@ namespace sfx {
             rate base;
         };
 
-        using ticktime = timestamp<tick, bpm>;
-        using frametime = timestamp<frame, samplerate>;
+        using tickstamp = timestamp<tick, bpm>;
+        using framestamp = timestamp<frame, samplerate>;
         
         template <typename To, typename ToBase, typename From, typename FromBase>
         constexpr timestamp<To, ToBase> convert(timestamp<From, FromBase> t, ToBase tr)
@@ -88,8 +88,8 @@ namespace sfx {
         };
 
         struct syncpoint {
-            ticktime    t;
-            frametime   f;
+            tickstamp    t;
+            framestamp   f;
         };
 
         using syncinterval = interval<syncpoint>;
