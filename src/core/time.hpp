@@ -21,11 +21,6 @@ namespace sfx {
             using timebase = bpm;
         };
 
-        constexpr bpm operator"" _bpm(long double b)
-            { return bpm{static_cast<bpm::type>(b)}; }
-        constexpr bpm operator"" _bpm(unsigned long long int b)
-            { return bpm{static_cast<bpm::type>(b)}; }
-
         /* Runtime dependant time */
 
         struct samplerate : strong_type<std::intmax_t, samplerate> {
@@ -35,11 +30,6 @@ namespace sfx {
         struct frame : strong_type<std::intmax_t, frame> {
             using timebase = samplerate;
         };
-
-        constexpr samplerate operator"" _Hz(unsigned long long int sr)
-            { return samplerate{static_cast<samplerate::type>(sr)}; }
-        constexpr samplerate operator"" _kHz(unsigned long long int sr)
-            { return samplerate{static_cast<samplerate::type>(sr) * 1000}; }
 
         /* Generic timepoint */
 
@@ -155,9 +145,9 @@ namespace sfx {
                 { assert(*this); return this->operator()(rstamp{r, rtime.base}).repr; }
             /*  */
             constexpr rstamp operator() (astamp as) const
-                { assert(*this); return (rtime + convert<RelRepr>(as - atime, rtime.base)); }
+                { return syncpoint<AbsRepr, RelRepr>{atime, rtime}(as); }
             constexpr RelRepr operator() (AbsRepr a) const
-                { assert(*this); return this->operator()(astamp{a, atime.base}).repr; }
+                { return syncpoint<AbsRepr, RelRepr>{atime, rtime}(a); }
             /*  */
             constexpr operator bool() const
                 { return rtime && atime; }
@@ -168,7 +158,19 @@ namespace sfx {
         using tickstamp = timestamp<tick>;
         using framestamp = timestamp<frame>;
 
+        using syncer = syncpoint<tick, frame>;
+
         constexpr auto frame_to_tick = convert<tick, frame>;
         constexpr auto tick_to_frame = convert<frame, tick>;
     }
 }
+
+constexpr sfx::time::bpm operator"" _bpm(long double b)
+    { return {static_cast<sfx::time::bpm::type>(b)}; }
+constexpr sfx::time::bpm operator"" _bpm(unsigned long long int b)
+    { return {static_cast<sfx::time::bpm::type>(b)}; }
+
+constexpr sfx::time::samplerate operator"" _Hz(unsigned long long int sr)
+    { return {static_cast<sfx::time::samplerate::type>(sr)}; }
+constexpr sfx::time::samplerate operator"" _kHz(unsigned long long int sr)
+    { return {static_cast<sfx::time::samplerate::type>(sr) * 1000}; }
