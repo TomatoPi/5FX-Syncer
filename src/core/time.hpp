@@ -2,6 +2,7 @@
 
 #include "strong-types.hpp"
 #include <chrono>
+#include <cassert>
 
 namespace sfx {
     namespace time {
@@ -48,12 +49,18 @@ namespace sfx {
             using timebase = typename Repr::timebase;
             repr_type repr;
             timebase base;
+            explicit constexpr operator bool() const
+                { return base != timebase{}; }
         };
 
+        template <typename Repr>
+        constexpr timestamp<Repr> sanitise(timestamp<Repr> t)
+            { return t ? t : timestamp<Repr>{}; }
 
         template <typename To, typename From>
         constexpr timestamp<To> convert(timestamp<From> t, typename To::timebase tr)
         {
+            assert(t); assert(tr != typename To::timebase{});
             using factor = std::ratio<
                 From::timebase::ratio::den * To::timebase::ratio::num,
                 From::timebase::ratio::num * To::timebase::ratio::den>;
@@ -76,6 +83,7 @@ namespace sfx {
         template <typename Repr>
         constexpr std::pair<timestamp<Repr>, timestamp<Repr>> align_bases(timestamp<Repr> a, timestamp<Repr> b)
         {
+            assert(a); assert(b);
             if (a.base == b.base)
                 return {a, b};
             if (a.base < b.base)
@@ -87,6 +95,9 @@ namespace sfx {
         template <typename Repr>
         constexpr bool operator== (timestamp<Repr> a, timestamp<Repr> b)
         {
+            // if (!a) return static_cast<bool>(b);
+            // if (!b) return a.repr == Repr{};
+            if (!a || !b) return false;
             auto [a_, b_] = align_bases(a, b);
             return a_.repr == b_.repr;
         }
@@ -94,6 +105,9 @@ namespace sfx {
         template <typename Repr>
         constexpr bool operator< (timestamp<Repr> a, timestamp<Repr> b)
         {
+            // if (!a) return b && Repr{} < b.repr;
+            // if (!b) return a.repr < Repr{};
+            if (!a || !b) return false;
             auto [a_, b_] = align_bases(a, b);
             return a_.repr < b_.repr;
         }
@@ -103,22 +117,28 @@ namespace sfx {
         template <typename Repr>
         constexpr timestamp<Repr> operator+ (timestamp<Repr> a, timestamp<Repr> b)
         {
+            // if (!a) return sanitise(b);
+            // if (!b) return sanitise(a);
+            assert(a); assert(b);
             auto [a_, b_] = align_bases(a, b);
             return {a_.repr + b_.repr, a_.base};
         }
         template <typename Repr>
         constexpr timestamp<Repr> operator+ (timestamp<Repr> a, Repr t)
-            { return {a.repr + t, a.base}; }
+            { assert(a); return {a.repr + t, a.base}; }
 
         template <typename Repr>
         constexpr timestamp<Repr> operator- (timestamp<Repr> a, timestamp<Repr> b)
         {
+            // if (!a) return sanitise(b);
+            // if (!b) return sanitise(a);
+            assert(a); assert(b);
             auto [a_, b_] = align_bases(a, b);
             return {a_.repr - b_.repr, a_.base};
         }
         template <typename Repr>
         constexpr timestamp<Repr> operator- (timestamp<Repr> a, Repr t)
-            { return {a.repr - t, a.base}; }
+            { assert(a); return {a.repr - t, a.base}; }
 
         /* Sync utilities */
 
@@ -130,14 +150,17 @@ namespace sfx {
             astamp atime; /**< Absolute timestamp offset */
             /*  */
             constexpr astamp operator() (rstamp rs) const
-                { return (atime + convert<AbsRepr>(rs - rtime, atime.base)); }
+                { assert(*this); return (atime + convert<AbsRepr>(rs - rtime, atime.base)); }
             constexpr AbsRepr operator() (RelRepr r) const
-                { return this->operator()(rstamp{r, rtime.base}).repr; }
+                { assert(*this); return this->operator()(rstamp{r, rtime.base}).repr; }
             /*  */
             constexpr rstamp operator() (astamp as) const
-                { return (rtime + convert<RelRepr>(as - atime, rtime.base)); }
+                { assert(*this); return (rtime + convert<RelRepr>(as - atime, rtime.base)); }
             constexpr RelRepr operator() (AbsRepr a) const
-                { return this->operator()(astamp{a, atime.base}).repr; }
+                { assert(*this); return this->operator()(astamp{a, atime.base}).repr; }
+            /*  */
+            constexpr operator bool() const
+                { return rtime && atime; }
         };
 
         /* Conveniant typedefs */

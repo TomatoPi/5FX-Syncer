@@ -24,6 +24,14 @@ int main(int argc, char * const argv[])
     constexpr tickstamp one_sec_t_60 {ppqn, 60_bpm};   /* 24 ticks == 1beat == 1s at 60bpm */
     constexpr tickstamp one_sec_t_120{ppqn * 2, 120_bpm}; /* 48 ticks == 2beat == 1s at 120bpm */
 
+    BIASSERT(one_sec_f_48);
+    BIASSERT(one_sec_f_96);
+    BIASSERT(one_sec_t_60);
+    BIASSERT(one_sec_t_120);
+    BIASSERT(!framestamp{});
+    BIASSERT(!tickstamp{});
+    BIASSERT(!tickstamp{16});
+
     BIASSERT(tick_to_frame(one_sec_t_60, 48_kHz).repr == 48'000);
     BIASSERT(tick_to_frame(one_sec_t_120, 48_kHz).repr == 48'000);
     BIASSERT(frame_to_tick(one_sec_f_48, 60_bpm).repr == ppqn);
