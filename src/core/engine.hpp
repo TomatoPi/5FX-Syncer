@@ -74,7 +74,7 @@ namespace sfx {
         {
             auto itr = table.find(e.pattern);
             if (itr == table.end()) throw std::runtime_error("Invalid pattern key : " + e.pattern);
-            active_patterns.insert_or_assign(itr->first, timestamp{}, itr->second);
+            // active_patterns.insert_or_assign(itr->first, timestamp{}, itr->second);
         }
         std::list<event::any> operator() (const event::internal::resume& e)
         {
