@@ -70,5 +70,56 @@ int main(int argc, char * const argv[])
     BIASSERT((tickstamp{90, 120_bpm} < tickstamp{200, 240_bpm}) && true);
     BIASSERT((tickstamp{66, 240_bpm} < tickstamp{55, 60_bpm}) && true);
 
+    /* Test arithmetical operators */
+
+    static_assert(tickstamp{0, 60_bpm} + tickstamp{15, 60_bpm} == tickstamp{15, 60_bpm});
+    static_assert(tickstamp{30, 60_bpm} + tickstamp{60, 60_bpm} == tickstamp{90, 60_bpm});
+    static_assert(tickstamp{30, 60_bpm} + tickstamp{60, 120_bpm} == tickstamp{30, 30_bpm});
+
+    static_assert(tickstamp{60, 60_bpm} - tickstamp{60, 60_bpm} == tickstamp{0, 60_bpm});
+    static_assert(tickstamp{60, 60_bpm} - tickstamp{120, 120_bpm} == tickstamp{0, 60_bpm});
+    static_assert(tickstamp{0, 60_bpm} - tickstamp{960, 120_bpm} == tickstamp{-240, 30_bpm});
+
+    /* Test syncronisation utilities */
+
+    using sync_t = syncpoint<tick, frame>;
+    constexpr sync_t sync0{tickstamp{0, 60_bpm}, framestamp{0, 48_kHz}};
+        /**< start bar 0 at frame 0, 60bpm */
+    static_assert(sync0(tick{0}) == frame{0});
+    static_assert(sync0(tick{1}) == frame{50});
+    static_assert(sync0(tick{240}) == frame{12'000});
+    static_assert(sync0(tick{960}) == frame{48'000});
+        /** frame to tick */
+    static_assert(sync0(frame{50}) == tick{1});
+    static_assert(sync0(frame{64}) == tick{1});
+    static_assert(sync0(frame{12'000}) == tick{240});
+    static_assert(sync0(frame{12'049}) == tick{240});
+    static_assert(sync0(frame{12'050}) == tick{241});
+
+    constexpr sync_t syncbarm1{tickstamp{ppqn * 4, 60_bpm}, framestamp{0, 48_kHz}};
+        /**< start bar 1 at frame 0, 60bpm */
+    static_assert(syncbarm1(tick{0}) == frame{-192'000});
+    static_assert(syncbarm1(tick{ppqn * 5}) == frame{48'000});
+    static_assert(syncbarm1(tick{ppqn * 4}) == frame{0});
+
+    constexpr sync_t syncpat60{tickstamp{0, 60_bpm}, framestamp{48'000, 48_kHz}};
+        /**< start bar 0 at sec 1, 60bpm */
+    static_assert(syncpat60(tick{0}) == frame{48'000});
+    static_assert(syncpat60(tick{1}) == frame{48'050});
+    static_assert(syncpat60(tick{ppqn}) == frame{96'000});
+        /** frame to tick */
+    static_assert(syncpat60(frame{0}) == tick{-960});
+    static_assert(syncpat60(frame{64}) == tick{-958});
+    static_assert(syncpat60(frame{47'950}) == tick{-1});
+    static_assert(syncpat60(frame{47'951}) == tick{0});
+    static_assert(syncpat60(frame{47'999}) == tick{0});
+    static_assert(syncpat60(frame{48'000}) == tick{0});
+
+    constexpr sync_t syncpat120{tickstamp{0, 120_bpm}, framestamp{48'000, 48_kHz}};
+        /**< start bar 0 at sec 1, 120bpm */
+    static_assert(syncpat120(tick{0}) == frame{48'000});
+    static_assert(syncpat120(tick{1}) == frame{48'025});
+    static_assert(syncpat120(tick{ppqn}) == frame{72'000});
+
     return 0;
 }

@@ -24,7 +24,7 @@ namespace sfx {
             { return bpm{static_cast<bpm::type>(b)}; }
         constexpr bpm operator"" _bpm(unsigned long long int b)
             { return bpm{static_cast<bpm::type>(b)}; }
-        
+
         /* Runtime dependant time */
 
         struct samplerate : strong_type<std::intmax_t, samplerate> {
@@ -50,14 +50,16 @@ namespace sfx {
             timebase base;
         };
 
-        
+
         template <typename To, typename From>
         constexpr timestamp<To> convert(timestamp<From> t, typename To::timebase tr)
         {
             using factor = std::ratio<
                 From::timebase::ratio::den * To::timebase::ratio::num,
                 From::timebase::ratio::num * To::timebase::ratio::den>;
-            typename To::type value = static_cast<typename To::type>((tr.v * t.repr.v * factor::num) / (t.base.v * factor::den));
+            auto num = tr.v * t.repr.v * factor::num;
+            auto den = t.base.v * factor::den;
+            typename To::type value = static_cast<typename To::type>(num / den);
             return {value, tr};
         }
 
@@ -95,6 +97,48 @@ namespace sfx {
             auto [a_, b_] = align_bases(a, b);
             return a_.repr < b_.repr;
         }
+
+        /* Arithmetical operator */
+
+        template <typename Repr>
+        constexpr timestamp<Repr> operator+ (timestamp<Repr> a, timestamp<Repr> b)
+        {
+            auto [a_, b_] = align_bases(a, b);
+            return {a_.repr + b_.repr, a_.base};
+        }
+        template <typename Repr>
+        constexpr timestamp<Repr> operator+ (timestamp<Repr> a, Repr t)
+            { return {a.repr + t, a.base}; }
+
+        template <typename Repr>
+        constexpr timestamp<Repr> operator- (timestamp<Repr> a, timestamp<Repr> b)
+        {
+            auto [a_, b_] = align_bases(a, b);
+            return {a_.repr - b_.repr, a_.base};
+        }
+        template <typename Repr>
+        constexpr timestamp<Repr> operator- (timestamp<Repr> a, Repr t)
+            { return {a.repr - t, a.base}; }
+
+        /* Sync utilities */
+
+        template <typename RelRepr, typename AbsRepr>
+        struct syncpoint {
+            using rstamp = timestamp<RelRepr>;
+            using astamp = timestamp<AbsRepr>;
+            rstamp rtime; /**< Relative timestamp offset */
+            astamp atime; /**< Absolute timestamp offset */
+            /*  */
+            constexpr astamp operator() (rstamp rs) const
+                { return (atime + convert<AbsRepr>(rs - rtime, atime.base)); }
+            constexpr AbsRepr operator() (RelRepr r) const
+                { return this->operator()(rstamp{r, rtime.base}).repr; }
+            /*  */
+            constexpr rstamp operator() (astamp as) const
+                { return (rtime + convert<RelRepr>(as - atime, rtime.base)); }
+            constexpr RelRepr operator() (AbsRepr a) const
+                { return this->operator()(astamp{a, atime.base}).repr; }
+        };
 
         /* Conveniant typedefs */
 
