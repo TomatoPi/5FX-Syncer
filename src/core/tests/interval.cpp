@@ -1,4 +1,4 @@
-#include "../src/core/interval.hpp"
+#include "../interval.hpp"
 
 #include <limits>
 #include <vector>

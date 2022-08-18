@@ -1,4 +1,4 @@
-#include "../src/core/time.hpp"
+#include "../time.hpp"
 
 #include <iostream>
 #include <cassert>
