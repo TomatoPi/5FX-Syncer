@@ -17,7 +17,7 @@ namespace sfx {
             /** 1BPM == *ppqn* ticks per 60 seconds */
             using ratio = std::ratio<ppqn, 60>;
             explicit constexpr operator bool() const
-                { return *this != 0; }
+                { return *this > 0.f; }
         };
         struct tick : strong_type<std::int32_t, tick> {
             using timebase = bpm;
@@ -31,7 +31,7 @@ namespace sfx {
             /**< 1Hz == 1 frame per 1 second */
             using ratio = std::ratio<1,1>;
             explicit constexpr operator bool() const
-                { return *this != 0; }
+                { return *this > 0; }
         };
         struct frame : strong_type<std::intmax_t, frame> {
             using timebase = samplerate;
@@ -72,7 +72,7 @@ namespace sfx {
         constexpr auto remap = to_stamp<Repr, Repr>;
 
         template <typename ToRepr, typename From>
-        constexpr typename ToRepr::timebase to_base(timestamp<From> deltaf, ToRepr deltat)
+        constexpr typename ToRepr::timebase to_base(timestamp<From> deltaf, ToRepr deltat = ToRepr{1})
         {
             assert(deltaf); assert(deltat);
             using factor = std::ratio<
