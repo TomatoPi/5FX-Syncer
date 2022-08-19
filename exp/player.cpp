@@ -29,18 +29,23 @@ int main(int argc, char * const argv[])
         with t == deltaf, tr == our new bpm :
 
             nbpm * deltaf.repr * num == deltaf.base * den
-            <=> nbpm = (deltaf.base * den) / (deltaf.repr * num)
+            <=> nbpm == (deltaf.base * den) / (deltaf.repr * num)
+
+        The general case is :
+            num * value == den
+            <=> nbpm * deltaf.repr * num * value == deltaf.base * den
+            <=> nbpm == (deltaf.base * den) / (deltaf.repr * num * value)
     */
 
-    using factor = std::ratio<
-        time::frame::timebase::ratio::den * time::tick::timebase::ratio::num,
-        time::frame::timebase::ratio::num * time::tick::timebase::ratio::den>;
+    // using factor = std::ratio<
+    //     time::frame::timebase::ratio::den * time::tick::timebase::ratio::num,
+    //     time::frame::timebase::ratio::num * time::tick::timebase::ratio::den>;
 
-    auto num = deltaf.base * factor::den;
-    auto den = deltaf.repr * factor::num;
-    time::bpm nbpm{static_cast<time::bpm::type>(num.v) / den.v};
+    // auto num = deltaf.base * factor::den;
+    // auto den = deltaf.repr * factor::num;
+    // time::bpm nbpm{static_cast<time::bpm::type>(num.v) / den.v};
 
-    assert(nbpm == 60_bpm);
+    // assert(nbpm == 60_bpm);
 
     return 0;
 }
