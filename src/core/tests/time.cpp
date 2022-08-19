@@ -44,30 +44,40 @@ int main(int argc, char * const argv[])
     BIASSERT(remap<tick>(one_sec_t_60, 120_bpm).repr == ppqn * 2);
     BIASSERT(remap<tick>(one_sec_t_120, 60_bpm).repr == ppqn);
 
+    /* advanced remaping */
+
+    BIASSERT(to_base(framestamp{48'000, 48_kHz}, tick{ppqn}) == 60_bpm); /**< 960 ticks in 1sec == 60bpm */
+    BIASSERT(to_base(framestamp{96'000, 96_kHz}, tick{ppqn}) == 60_bpm);
+    BIASSERT(to_base(framestamp{192'000, 192_kHz}, tick{ppqn}) == 60_bpm);
+        /** Twice more ticks in the same duration <=> double bpm */
+    BIASSERT(to_base(framestamp{192'000, 192_kHz}, tick{ppqn * 2}) == 120_bpm);
+        /** Twice less ticks in the same duration <=> half bpm */
+    BIASSERT(to_base(framestamp{192'000, 192_kHz}, tick{ppqn / 2}) == 30_bpm);
+
     /* Check numeric stability at highest samplerate */
 
-    BIASSERT(remap<frame>(framestamp{196'000, 196_kHz}, 196_kHz).repr == 196'000);
-    BIASSERT(remap<frame>(framestamp{196'000, 196_kHz}, 48_kHz).repr == 48'000);
-    BIASSERT(remap<frame>(one_sec_f_48, 196_kHz).repr == 196'000);
+    BIASSERT(remap<frame>(framestamp{192'000, 192_kHz}, 192_kHz).repr == 192'000);
+    BIASSERT(remap<frame>(framestamp{192'000, 192_kHz}, 48_kHz).repr == 48'000);
+    BIASSERT(remap<frame>(one_sec_f_48, 192_kHz).repr == 192'000);
 
     /* The FINAL test, check stability for at least 72 hours at maximal samplerate */
 
-    BIASSERT(remap<frame>(framestamp{50'803'200'000, 196_kHz}, 196_kHz).repr == 50'803'200'000);
-    BIASSERT(remap<frame>(framestamp{24'883'200'000, 96_kHz},  196_kHz).repr == 50'803'200'000);
-    BIASSERT(remap<frame>(framestamp{12'441'600'000, 48_kHz},  196_kHz).repr == 50'803'200'000);
+    BIASSERT(remap<frame>(framestamp{49'766'400'000, 192_kHz}, 192_kHz).repr == 49'766'400'000);
+    BIASSERT(remap<frame>(framestamp{24'883'200'000, 96_kHz},  192_kHz).repr == 49'766'400'000);
+    BIASSERT(remap<frame>(framestamp{12'441'600'000, 48_kHz},  192_kHz).repr == 49'766'400'000);
 
-    BIASSERT(tick_to_frame(tickstamp{248'832'000,  60_bpm}, 196_kHz).repr  == 50'803'200'000);
-    BIASSERT(tick_to_frame(tickstamp{995'328'000, 240_bpm}, 196_kHz).repr == 50'803'200'000);
+    BIASSERT(tick_to_frame(tickstamp{248'832'000,  60_bpm}, 192_kHz).repr  == 49'766'400'000);
+    BIASSERT(tick_to_frame(tickstamp{995'328'000, 240_bpm}, 192_kHz).repr == 49'766'400'000);
 
-    BIASSERT(frame_to_tick(framestamp{50'803'200'000, 196_kHz}, 240_bpm).repr == 995'328'000);
+    BIASSERT(frame_to_tick(framestamp{49'766'400'000, 192_kHz}, 240_bpm).repr == 995'328'000);
 
     /* Test relational operators */
 
-    BIASSERT((framestamp{0, 48_kHz} == framestamp{0, 196_kHz}) && true);
-    BIASSERT((framestamp{196'000, 196_kHz} == framestamp{48'000, 48_kHz}) && true);
+    BIASSERT((framestamp{0, 48_kHz} == framestamp{0, 192_kHz}) && true);
+    BIASSERT((framestamp{192'000, 192_kHz} == framestamp{48'000, 48_kHz}) && true);
     BIASSERT((framestamp{44'100, 44'100_Hz} == framestamp{48'000, 48_kHz}) && true);
     BIASSERT((framestamp{24'000, 44'100_Hz} < framestamp{48'000, 48_kHz}) && true);
-    BIASSERT((framestamp{96'000, 196'000_Hz} < framestamp{40'000, 48_kHz}) && true);
+    BIASSERT((framestamp{96'000, 192'000_Hz} < framestamp{40'000, 48_kHz}) && true);
 
     BIASSERT(!(framestamp{95'999, 96_kHz} == framestamp{47'999, 48_kHz}) && true);
     BIASSERT(!(framestamp{95'999, 96_kHz} < framestamp{47'999, 48_kHz}) && true);

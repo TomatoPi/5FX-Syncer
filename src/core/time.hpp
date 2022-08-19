@@ -7,36 +7,6 @@
 namespace sfx {
     namespace time {
 
-        /* Metaprogramming utils */
-
-        namespace meta {
-            template <typename ...>
-            struct traits {};
-        }
-
-        template <typename Repr>
-        struct timestamp {
-            typename meta::traits<Repr>::repr_type repr;
-            typename meta::traits<Repr>::base_type base;
-            explicit constexpr operator bool() const
-                { return static_cast<bool>(base); }
-        };
-
-        namespace meta {
-            template <typename Repr>
-            struct traits<timestamp<Repr>> {
-                /* TODO */
-            };
-            
-            template <typename Repr, typename Base, typename Ratio>
-            struct make_time_unit {
-                using stamp_type = timestamp<Repr>;
-                using repr_type  = Repr;
-                using base_type  = Base;
-                using base_ratio = Ratio;
-            };
-        }
-
         /* Hardcoded constants */
 
         static constexpr const int32_t ppqn = 960;
@@ -44,72 +14,74 @@ namespace sfx {
         /* Score dependant time */
 
         struct bpm  : strong_type<float, bpm> {
-            explicit constexpr operator bool() const
-                { return v != 0; }
-        };
-        struct tick : strong_type<std::int32_t, tick> {};
-
-        namespace meta {
             /** 1BPM == *ppqn* ticks per 60 seconds */
-            using score_time_traits = make_time_unit<tick, bpm, std::ratio<ppqn, 60>>;
-            template <> struct traits<tick> : score_time_traits {};
-            template <> struct traits<bpm>  : score_time_traits {};
-        }
+            using ratio = std::ratio<ppqn, 60>;
+            explicit constexpr operator bool() const
+                { return *this != 0; }
+        };
+        struct tick : strong_type<std::int32_t, tick> {
+            using timebase = bpm;
+            explicit constexpr operator bool() const
+                { return *this != 0; }
+        };
 
         /* Runtime dependant time */
 
         struct samplerate : strong_type<std::intmax_t, samplerate> {
+            /**< 1Hz == 1 frame per 1 second */
+            using ratio = std::ratio<1,1>;
             explicit constexpr operator bool() const
-                { return v != 0; }
+                { return *this != 0; }
         };
-        struct frame : strong_type<std::intmax_t, frame> {};
-
-        namespace meta {
-            /** 1Hz == 1 frame per 1 second */
-            using play_time_traits = make_time_unit<frame, samplerate, std::ratio<1>>;
-            template <> struct traits<frame>        : play_time_traits {};
-            template <> struct traits<samplerate>   : play_time_traits {};
-        }
+        struct frame : strong_type<std::intmax_t, frame> {
+            using timebase = samplerate;
+            explicit constexpr operator bool() const
+                { return *this != 0; }
+        };
 
         /* Generic timepoint */
+
+        template <typename Repr>
+        struct timestamp {
+            using repr_type = Repr;
+            using timebase = typename Repr::timebase;
+            repr_type repr;
+            timebase base;
+            explicit constexpr operator bool() const
+                { return static_cast<bool>(base); }
+        };
 
         template <typename Repr>
         constexpr timestamp<Repr> sanitise(timestamp<Repr> t)
             { return t ? t : timestamp<Repr>{}; }
 
-        template <
-            typename To,
-            typename From,
-            typename MT = meta::traits<To>,
-            typename MF = meta::traits<From>
-            >
-        constexpr typename MT::stamp_type convert(typename MF::stamp_type ftime, typename MT::base_type tbase)
+        template <typename To, typename From>
+        constexpr timestamp<To> to_stamp(timestamp<From> ftime, typename To::timebase tbase)
         {
             assert(ftime); assert(tbase);
             using factor = std::ratio<
-                MF::base_ratio::den * MT::base_ratio::num,
-                MF::base_ratio::num * MT::base_ratio::den>;
+                From::timebase::ratio::den * To::timebase::ratio::num,
+                From::timebase::ratio::num * To::timebase::ratio::den>;
             auto num = tbase.v * ftime.repr.v * factor::num;
             auto den = ftime.base.v * factor::den;
-            typename To::type value = static_cast<typename To::type>(num / den);
+            auto value = static_cast<typename To::type>(num / den);
             return {value, tbase};
         }
-        
-        // template <typename To, typename From>
-        // constexpr typename To::timebase convert_delta(timestamp<From> deltaf, To deltat)
-        // {
-        //     assert(t); assert(tr != typename To::timebase{});
-        //     using factor = std::ratio<
-        //         From::timebase::ratio::den * To::timebase::ratio::num,
-        //         From::timebase::ratio::num * To::timebase::ratio::den>;
-        //     auto num = tr.v * t.repr.v * factor::num;
-        //     auto den = t.base.v * factor::den;
-        //     typename To::type value = static_cast<typename To::type>(num / den);
-        //     return {value, tr};
-        // }
 
         template <typename Repr>
-        constexpr auto remap = convert<Repr, Repr>;
+        constexpr auto remap = to_stamp<Repr, Repr>;
+
+        template <typename ToRepr, typename From>
+        constexpr typename ToRepr::timebase to_base(timestamp<From> deltaf, ToRepr deltat)
+        {
+            assert(deltaf); assert(deltat);
+            using factor = std::ratio<
+                From::timebase::ratio::den * ToRepr::timebase::ratio::num,
+                From::timebase::ratio::num * ToRepr::timebase::ratio::den>;
+            auto num = deltaf.base.v * factor::den * deltat.v;
+            auto den = deltaf.repr.v * factor::num;
+            return {static_cast<typename ToRepr::timebase::type>(num) / den};
+        }
 
         /* Relational operators */
 
@@ -118,11 +90,8 @@ namespace sfx {
          * @return a pair of timestamps (a', b') remaped to a rate of max(a.rate, b.rate)
          * @note It may exist some corner cases where two slightly different timestamps are aliased as equals
          */
-        template <
-            typename Repr,
-            typename Timestamp = typename meta::traits<Repr>::stamp_type
-            >
-        constexpr std::pair<Timestamp, Timestamp> align_bases(Timestamp a, Timestamp b)
+        template <typename Repr>
+        constexpr std::pair<timestamp<Repr>, timestamp<Repr>> align_bases(timestamp<Repr> a, timestamp<Repr> b)
         {
             assert(a); assert(b);
             if (a.base == b.base)
@@ -139,7 +108,7 @@ namespace sfx {
             // if (!a) return static_cast<bool>(b);
             // if (!b) return a.repr == Repr{};
             if (!a || !b) return false;
-            auto [a_, b_] = align_bases<Repr>(a, b);
+            auto [a_, b_] = align_bases(a, b);
             return a_.repr == b_.repr;
         }
 
@@ -191,14 +160,14 @@ namespace sfx {
             astamp atime; /**< Absolute timestamp offset */
             /*  */
             constexpr astamp operator() (rstamp rs) const
-                { assert(*this); return (atime + convert<AbsRepr>(rs - rtime, atime.base)); }
+                { assert(*this); return (atime + to_stamp<AbsRepr>(rs - rtime, atime.base)); }
             constexpr AbsRepr operator() (RelRepr r) const
                 { assert(*this); return this->operator()(rstamp{r, rtime.base}).repr; }
             /*  */
             constexpr rstamp operator() (astamp as) const
-                { return syncpoint<AbsRepr, RelRepr>{atime, rtime}(as); }
+                { assert(*this); return syncpoint<AbsRepr, RelRepr>{atime, rtime}(as); }
             constexpr RelRepr operator() (AbsRepr a) const
-                { return syncpoint<AbsRepr, RelRepr>{atime, rtime}(a); }
+                { assert(*this); return syncpoint<AbsRepr, RelRepr>{atime, rtime}(a); }
             /*  */
             constexpr operator bool() const
                 { return rtime && atime; }
@@ -211,8 +180,8 @@ namespace sfx {
 
         using syncer = syncpoint<tick, frame>;
 
-        constexpr auto frame_to_tick = convert<tick, frame>;
-        constexpr auto tick_to_frame = convert<frame, tick>;
+        constexpr auto frame_to_tick = to_stamp<tick, frame>;
+        constexpr auto tick_to_frame = to_stamp<frame, tick>;
     }
 }
 
