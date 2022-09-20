@@ -1,0 +1,3 @@
+[submodule "strong-types"]
+	path = strong-types
+	url = https://github.com/TomatoPi/strong-types.git

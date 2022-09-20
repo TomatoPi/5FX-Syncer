@@ -1,19 +1,43 @@
 #pragma once
 
 #include "strong-types.hpp"
-#include <chrono>
+#include <numeric>
 #include <cassert>
+#include <cinttypes>
 
 namespace sfx {
     namespace time {
 
-        /* Hardcoded constants */
+        /* Generic time measurement */
 
-        static constexpr const int32_t ppqn = 960;
+        class ratio {
+        private :
+            std::intmax_t n;
+            std::intmax_t d;
+        public :
+            constexpr ratio(std::intmax_t num = 1, std::intmax_t den = 1) :
+                n{((std::imaxabs(den) / den) * num) / std::gcd(num, den)},
+                d{std::imaxabs(den) / std::gcd(num, den)}
+                { assert(den != 0); }
+            constexpr std::intmax_t num() const { return n; }
+            constexpr std::intmax_t den() const { return d; }
+        };
+
+        template <typename Repr>
+        struct timebase : strong_type<Repr, timebase<Repr>> {
+            ratio r;
+            explicit constexpr operator bool() const { return *this != 0; }
+        };
+
+        template <typename Repr, typename Timebase>
+        struct timestamp : strong_type<Repr, timestamp<Repr, Timebase>> {
+            Timebase t;
+            explicit constexpr operator bool() const { return static_cast<bool>(t); }
+        };
 
         /* Score dependant time */
 
-        struct bpm  : strong_type<float, bpm> {
+        struct bpm : strong_type<float, bpm> {
             /** 1BPM == *ppqn* ticks per 60 seconds */
             using ratio = std::ratio<ppqn, 60>;
             explicit constexpr operator bool() const
