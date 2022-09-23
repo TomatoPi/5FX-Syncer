@@ -4,6 +4,7 @@
 #include <numeric>
 #include <cassert>
 #include <cinttypes>
+#include <cmath>
 #include <chrono>
 
 namespace sfx {
@@ -13,68 +14,99 @@ namespace sfx {
 
         class ratio {
         private :
-            std::intmax_t n;
-            std::intmax_t d;
+            std::intmax_t n; /**< numerator */
+            std::intmax_t d; /**< denominator */
         public :
             constexpr ratio(std::intmax_t num = 1, std::intmax_t den = 1) :
-                n{((std::imaxabs(den) / den) * num) / std::gcd(num, den)},
-                d{std::imaxabs(den) / std::gcd(num, den)}
+                    n{((den < 0 ? -1 : 1) * num) / std::gcd(num, den)},
+                    d{(den * (den < 0 ? -1 : 1)) / std::gcd(num, den)}
                 { assert(den != 0); }
+
             constexpr std::intmax_t num() const { return n; }
             constexpr std::intmax_t den() const { return d; }
             constexpr ratio inverse() const { return ratio(d, n); }
-            constexpr friend ratio operator* (ratio a, ratio b) { return ratio(a.n * b.n, a.d * b.d); }
+
+            constexpr friend ratio operator* (ratio a, ratio b)
+                { return ratio(a.n * b.n, a.d * b.d); }
+            constexpr friend bool operator== (ratio a, ratio b)
+                { return (a.num() == b.num()) && (a.den() == b.den()); }
+            constexpr friend bool operator< (ratio a, ratio b)
+                { return (a.num() * b.den()) < (a.den() * b.num()); }
+        };
+
+        struct timebase : strong_type<ratio, timebase> {
+            constexpr bool is_valid() const 
+                { return v.num() != 0 && v.den() != 0; }
         };
 
         template <typename Repr>
-        struct timebase : strong_type<Repr, timebase<Repr>> {
+        class duration {
+        public :
             using repr = Repr;
-            ratio r;
-            explicit constexpr operator bool() const { return *this > static_cast<Repr>(0); }
-        };
 
-        template <typename Repr, typename Timebase>
-        struct timestamp : strong_type<Repr, timestamp<Repr, Timebase>> {
-            using repr = Repr;
-            using timebase = Timebase;
-            timebase t;
-            explicit constexpr operator bool() const { return static_cast<bool>(t); }
+            constexpr duration(
+                Repr v = static_cast<Repr>(0),
+                timebase p = timebase(1, 1))
+                : _value(v), _period(p)
+                {}
+            constexpr duration(duration other, timebase p)
+                : duration(rebase(other._value, other._period, p).value().v, p)
+                {}
+
+            constexpr bool is_valid() const 
+                { return _period.is_valid(); }
+
+            constexpr duration sanitised() const
+                { return is_valid() ? *this : duration(); }
+
+            constexpr Repr value() const
+                { return _value; }
+            constexpr Repr value(timebase p) const
+                { return rebase(_value, _period, p).value(); }
+
+            constexpr timebase period() const
+                { return _period; }
+            constexpr timebase as_base() const
+                { return duration_to_timebase(_value, _period); }
+
+            static constexpr std::pair<duration, duration> align_bases(
+                duration a, duration b)
+            {
+
+            }
+
+        private :
+
+            static constexpr duration rebase(
+                repr val, timebase fromb, timebase tob)
+            {
+                assert(fromb.is_valid()); assert(tob.is_valid());
+                const ratio factor(fromb.v.inverse() * tob.v);
+                auto num = val * factor.num();
+                auto den = factor.den();
+                return {static_cast<repr>(num / den), tob};
+            }
+            
+            static constexpr timebase duration_to_timebase(
+                repr delta, timebase fromb)
+            {
+                assert(delta != static_cast<repr>(0));
+                assert(fromb.is_valid());
+                auto num = delta * fromb.v.den();
+                auto den = fromb.v.num();
+                return timebase{ratio(num, den)};
+            }
+
+            Repr     _value;
+            timebase _period;
         };
 
         /* Generic timestamp conversions */
 
-        template <typename Timestamp>
-        constexpr Timestamp sanitise(Timestamp t)
-            { return static_cast<bool>(t) ? t : Timestamp(); }
-
-        template <typename ToTimestamp, typename FromTimestamp>
-        constexpr ToTimestamp rebase(FromTimestamp ftime, typename ToTimestamp::timebase tbase)
-        {
-            assert(ftime); assert(tbase);
-            ratio factor(ftime.t.r.inverse() * tbase.r);
-            auto num = tbase.v * ftime.repr.v * factor.num();
-            auto den = ftime.base.v * factor.den();
-            auto value = static_cast<typename ToTimestamp::repr>(num / den);
-            return {value, tbase};
-        }
-
-        template <typename Repr>
-        constexpr auto remap = rebase<Repr, Repr>;
-
-        template <typename ToTimestamp, typename FromTimestamp>
-        constexpr typename ToTimestamp::timebase to_base(FromTimestamp deltaf, ToTimestamp deltat = ToTimestamp{1})
-        {
-            assert(deltaf); assert(deltat);
-            ratio factor(deltaf.t.r.inverse() * deltat.t.r);
-            auto num = deltaf.base.v * factor.den() * deltat.v;
-            auto den = deltaf.repr.v * factor.num();
-            return {static_cast<typename ToTimestamp::timebase::repr>(num) / den};
-        }
-
         /* Usual Timestamps definitions */
 
-        struct bpm : timebase<float> {};
-        struct samplerate : timebase<std::intmax_t> {};
+        // struct bpm : timebase<float> {};
+        // struct samplerate : timebase<std::intmax_t> {};
 
         // /* Score dependant time */
 
@@ -249,13 +281,9 @@ namespace sfx {
         // constexpr auto tick_to_frame = to_stamp<frame, tick>;
     }
 }
-
-constexpr sfx::time::bpm operator"" _bpm(long double b)
-    { return {static_cast<sfx::time::bpm::repr>(b), }; }
-constexpr sfx::time::bpm operator"" _bpm(unsigned long long int b)
-    { return {static_cast<sfx::time::bpm::repr>(b)}; }
-
-constexpr sfx::time::samplerate operator"" _Hz(unsigned long long int sr)
-    { return {static_cast<sfx::time::samplerate::repr>(sr)}; }
-constexpr sfx::time::samplerate operator"" _kHz(unsigned long long int sr)
-    { return {static_cast<sfx::time::samplerate::repr>(sr) * 1000}; }
+constexpr sfx::time::timebase operator"" _bpm(unsigned long long int b)
+    { return {sfx::time::ratio{static_cast<std::intmax_t>(b), 60}}; }
+constexpr sfx::time::timebase operator"" _Hz(unsigned long long int sr)
+    { return {sfx::time::ratio{static_cast<std::intmax_t>(sr), 1}}; }
+constexpr sfx::time::timebase operator"" _kHz(unsigned long long int sr)
+    { return {sfx::time::ratio{static_cast<std::intmax_t>(sr) * 1000, 1}}; }
