@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20.0)
 project(5FX-Syncer VERSION 0.1.0)
 
+enable_testing()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -15,6 +17,7 @@ set(SOURCES
 
 add_subdirectory(src)
 add_subdirectory(exp)
+add_subdirectory(strong-types)
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 

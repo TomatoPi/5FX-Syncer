@@ -32,11 +32,32 @@ namespace sfx {
                 { return (a.num() == b.num()) && (a.den() == b.den()); }
             constexpr friend bool operator< (ratio a, ratio b)
                 { return (a.num() * b.den()) < (a.den() * b.num()); }
+
+            constexpr friend ratio operator* (ratio a, std::intmax_t f)
+                { return ratio(a.n * f, a.d); }
+            constexpr friend ratio operator* (std::intmax_t f, ratio a)
+                { return a * f; }
+            constexpr friend ratio operator/ (ratio a, std::intmax_t f)
+                { return ratio(a.n, a.d * f); }
+            constexpr friend ratio operator/ (std::intmax_t f, ratio a)
+                { return ratio(f * a.d, a.n); }
+
+            explicit constexpr operator float() const 
+                { return static_cast<float>(n) / static_cast<float>(d); }
+            explicit constexpr operator double() const
+                { return static_cast<double>(n) / static_cast<double>(d); }
+            explicit constexpr operator std::intmax_t() const
+                { return n / d; }
         };
 
         struct timebase : strong_type<ratio, timebase> {
             constexpr bool is_valid() const 
                 { return v.num() != 0 && v.den() != 0; }
+                
+            constexpr friend timebase operator* (timebase a, std::intmax_t f)
+                { return timebase{ratio(a.v.num() * f, a.v.den())}; }
+            constexpr friend timebase operator* (std::intmax_t f, timebase a)
+                { return a * f; }
         };
 
         template <typename Repr>
@@ -44,14 +65,18 @@ namespace sfx {
         public :
             using repr = Repr;
 
+            /** Ctors **/
+
             constexpr duration(
                 Repr v = static_cast<Repr>(0),
                 timebase p = timebase(1, 1))
                 : _value(v), _period(p)
                 {}
             constexpr duration(duration other, timebase p)
-                : duration(rebase(other._value, other._period, p).value().v, p)
+                : duration(other.value(p), p)
                 {}
+
+            /** Accessors **/
 
             constexpr bool is_valid() const 
                 { return _period.is_valid(); }
@@ -69,10 +94,61 @@ namespace sfx {
             constexpr timebase as_base() const
                 { return duration_to_timebase(_value, _period); }
 
+            /** Utility **/
+
             static constexpr std::pair<duration, duration> align_bases(
                 duration a, duration b)
             {
+                if (a.period() == b.period())
+                    return {a, b};
+                if (a.period() < b.period())
+                    return {duration(a, b.period()), b};
+                else
+                    return {a, duration(b, a.period())};
+            }
 
+            /** Relational operators **/
+
+            constexpr friend bool operator== (duration a, duration b)
+            {
+                if (!a.is_valid() || !b.is_valid()) return false;
+                auto [_a, _b] = align_bases(a, b);
+                return _a.value() == _b.value();
+            }
+
+            constexpr friend bool operator< (duration a, duration b)
+            {
+                if (!a.is_valid() || !b.is_valid()) return false;
+                auto [_a, _b] = align_bases(a, b);
+                return _a.value() < _b.value();
+            }
+
+            /** Arithmetic operators **/
+
+            constexpr friend duration operator+ (duration a, duration b)
+            {
+                assert(a.is_valid());
+                assert(b.is_valid());
+                auto [_a, _b] = align_bases(a, b);
+                return {_a.value() + _b.value(), _a.period()};
+            }
+            constexpr friend duration operator+ (duration a, repr t)
+            {
+                assert(a.is_valid());
+                return {a.value() + t, a.period()};
+            }
+
+            constexpr friend duration operator- (duration a, duration b)
+            {
+                assert(a.is_valid());
+                assert(b.is_valid());
+                auto [_a, _b] = align_bases(a, b);
+                return {_a.value() - _b.value(), _a.period()};
+            }
+            constexpr friend duration operator- (duration a, repr t)
+            {
+                assert(a.is_valid());
+                return {a.value() - t, a.period()};
             }
 
         private :

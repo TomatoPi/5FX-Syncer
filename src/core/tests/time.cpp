@@ -64,15 +64,6 @@ int main(int argc, char * const argv[])
 
     constexpr auto x = duration(48'000, 48_kHz);
 
-    std::cout << x.value() << std::endl;
-    std::cout << std::endl;
-    std::cout << x.period().v.num() << std::endl;
-    std::cout << x.period().v.den() << std::endl;
-    std::cout << std::endl;
-    std::cout << x.as_base().v.num() << std::endl;
-    std::cout << x.as_base().v.den() << std::endl;
-    
-
     BIASSERT(duration(48'000, 48_kHz).as_base() == 60_bpm);
     BIASSERT(duration(96'000, 96_kHz).as_base()   == 60_bpm);
     BIASSERT(duration(192'000, 192_kHz).as_base() == 60_bpm);
@@ -89,52 +80,60 @@ int main(int argc, char * const argv[])
 
     /* Check stability for at least 72 hours at maximal samplerate */
 
-    BIASSERT(duration(49'766'400'000, 192_kHz).value(192_kHz) 
-        == 49'766'400'000);
-    BIASSERT(duration(24'883'200'000, 96_kHz).value(192_kHz)
-        == 49'766'400'000);
-    BIASSERT(duration(12'441'600'000, 48_kHz).value(192_kHz)
-        == 49'766'400'000);
+    constexpr uint64_t secsp72h          = 259'200; //*< 3600 * 72 */
+    constexpr uint64_t framesp72h_192kHz = 49'766'400'000;
+    constexpr uint64_t framesp72h_96kHz  = 24'883'200'000;
+    constexpr uint64_t framesp72h_48kHz  = 12'441'600'000;
 
-    BIASSERT(duration(248'832'000, 57600_bpm).value(192_kHz)
-        == 49'766'400'000);
-    BIASSERT(duration(995'328'000, 240_bpm).value(192_kHz)
-        == 49'766'400'000);
+    BIASSERT(duration(secsp72h * 192'000, 192_kHz).value(192_kHz) 
+        == framesp72h_192kHz);
+    BIASSERT(duration(framesp72h_96kHz, 96_kHz).value(192_kHz)
+        == framesp72h_192kHz);
+    BIASSERT(duration(framesp72h_48kHz, 48_kHz).value(192_kHz)
+        == framesp72h_192kHz);
 
-    BIASSERT(duration(49'766'400'000, 192_kHz).value(240_bpm)
-        == 995'328'000);
+    constexpr uint64_t ppqn = 960;
 
-    // /* Test relational operators */
+    BIASSERT(duration(ppqn * secsp72h, ppqn * 60_bpm).value(192_kHz)
+        == framesp72h_192kHz);
+    BIASSERT(duration(4 * ppqn * secsp72h, 4 * ppqn * 60_bpm).value(192_kHz)
+        == framesp72h_192kHz);
+    BIASSERT(duration(framesp72h_192kHz, 192_kHz).value(4 * ppqn * 60_bpm)
+        == 4 * ppqn * secsp72h);
 
-    // BIASSERT((framestamp{0, 48_kHz} == framestamp{0, 192_kHz}) && true);
-    // BIASSERT((framestamp{192'000, 192_kHz} == framestamp{48'000, 48_kHz}) && true);
-    // BIASSERT((framestamp{44'100, 44'100_Hz} == framestamp{48'000, 48_kHz}) && true);
-    // BIASSERT((framestamp{24'000, 44'100_Hz} < framestamp{48'000, 48_kHz}) && true);
-    // BIASSERT((framestamp{96'000, 192'000_Hz} < framestamp{40'000, 48_kHz}) && true);
+    /* Test relational operators */
 
-    // BIASSERT(!(framestamp{95'999, 96_kHz} == framestamp{47'999, 48_kHz}) && true);
-    // BIASSERT(!(framestamp{95'999, 96_kHz} < framestamp{47'999, 48_kHz}) && true);
+    BIASSERT(duration(0, 48_kHz) == duration(0, 192_kHz));
+    BIASSERT(duration(192'000, 192_kHz) == duration(48'000, 48_kHz));
+    BIASSERT(duration(44'100, 44'100_Hz) == duration(48'000, 48_kHz));
+    BIASSERT(duration(96'000, 192_kHz) == duration(24'000, 48_kHz));
 
-    // BIASSERT((0, 120_bpm}  == tickstamp{0, 240_bpm}) && true);
-    // BIASSERT((tickstamp{60, 120_bpm} == tickstamp{120, 240_bpm}) && true);
-    // BIASSERT((tickstamp{90, 120_bpm} == tickstamp{180, 240_bpm}) && true);
-    // BIASSERT((tickstamp{90, 120_bpm} < tickstamp{200, 240_bpm}) && true);
-    // BIASSERT((tickstamp{66, 240_bpm} < tickstamp{55, 60_bpm}) && true);
+    BIASSERT(duration(24'000, 44'100_Hz) < duration(48'000, 48_kHz));
+    BIASSERT(duration(96'000, 192'000_Hz) < duration(40'000, 48_kHz));
 
-    // /* Test arithmetical operators */
+    BIASSERT(!(duration(95'999, 96_kHz) == duration(47'999, 48_kHz)));
+    BIASSERT(!(duration(95'999, 96_kHz) < duration(47'999, 48_kHz)));
 
-    // static_assert(tickstamp{0, 60_bpm} + tickstamp{15, 60_bpm} == tickstamp{15, 60_bpm});
-    // static_assert(tickstamp{30, 60_bpm} + tickstamp{60, 60_bpm} == tickstamp{90, 60_bpm});
-    // static_assert(tickstamp{30, 60_bpm} + tickstamp{60, 120_bpm} == tickstamp{30, 30_bpm});
+    BIASSERT(duration(0, 120_bpm)  == duration(0, 240_bpm));
+    BIASSERT(duration(60, 120_bpm) == duration(120, 240_bpm));
+    BIASSERT(duration(90, 120_bpm) == duration(180, 240_bpm));
+    BIASSERT(duration(90, 120_bpm) < duration(200, 240_bpm));
+    BIASSERT(duration(66, 240_bpm) < duration(55, 60_bpm));
 
-    // static_assert(tickstamp{60, 60_bpm} - tickstamp{60, 60_bpm} == tickstamp{0, 60_bpm});
-    // static_assert(tickstamp{60, 60_bpm} - tickstamp{120, 120_bpm} == tickstamp{0, 60_bpm});
-    // static_assert(tickstamp{0, 60_bpm} - tickstamp{960, 120_bpm} == tickstamp{-240, 30_bpm});
+    /* Test arithmetical operators */
+
+    BIASSERT(duration(0, 60_bpm) + duration(15, 60_bpm) == duration(15, 60_bpm));
+    BIASSERT(duration(30, 60_bpm) + duration(60, 60_bpm) == duration(90, 60_bpm));
+    BIASSERT(duration(30, 60_bpm) + duration(60, 120_bpm) == duration(30, 30_bpm));
+
+    BIASSERT(duration(60, 60_bpm) - duration(60, 60_bpm) == duration(0, 60_bpm));
+    BIASSERT(duration(60, 60_bpm) - duration(120, 120_bpm) == duration(0, 60_bpm));
+    BIASSERT(duration(0, 60_bpm) - duration(960, 120_bpm) == duration(-240, 30_bpm));
 
     // /* Test syncronisation utilities */
 
     // using sync_t = syncpoint<tick, frame>;
-    // constexpr sync_t sync0{tickstamp{0, 60_bpm}, framestamp{0, 48_kHz}};
+    // constexpr sync_t sync0{duration(0, 60_bpm}, duration(0, 48_kHz}};
     //     /**< start bar 0 at frame 0, 60bpm */
     // static_assert(sync0(tick{0}) == frame{0});
     // static_assert(sync0(tick{1}) == frame{50});
@@ -147,13 +146,13 @@ int main(int argc, char * const argv[])
     // static_assert(sync0(frame{12'049}) == tick{240});
     // static_assert(sync0(frame{12'050}) == tick{241});
 
-    // constexpr sync_t syncbarm1{tickstamp{ppqn * 4, 60_bpm}, framestamp{0, 48_kHz}};
+    // constexpr sync_t syncbarm1{duration(ppqn * 4, 60_bpm}, duration(0, 48_kHz}};
     //     /**< start bar 1 at frame 0, 60bpm */
     // static_assert(syncbarm1(tick{0}) == frame{-192'000});
     // static_assert(syncbarm1(tick{ppqn * 5}) == frame{48'000});
     // static_assert(syncbarm1(tick{ppqn * 4}) == frame{0});
 
-    // constexpr sync_t syncpat60{tickstamp{0, 60_bpm}, framestamp{48'000, 48_kHz}};
+    // constexpr sync_t syncpat60{duration(0, 60_bpm}, duration(48'000, 48_kHz}};
     //     /**< start bar 0 at sec 1, 60bpm */
     // static_assert(syncpat60(tick{0}) == frame{48'000});
     // static_assert(syncpat60(tick{1}) == frame{48'050});
@@ -166,7 +165,7 @@ int main(int argc, char * const argv[])
     // static_assert(syncpat60(frame{47'999}) == tick{0});
     // static_assert(syncpat60(frame{48'000}) == tick{0});
 
-    // constexpr sync_t syncpat120{tickstamp{0, 120_bpm}, framestamp{48'000, 48_kHz}};
+    // constexpr sync_t syncpat120{duration(0, 120_bpm}, duration(48'000, 48_kHz}};
     //     /**< start bar 0 at sec 1, 120bpm */
     // static_assert(syncpat120(tick{0}) == frame{48'000});
     // static_assert(syncpat120(tick{1}) == frame{48'025});
