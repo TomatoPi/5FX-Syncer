@@ -69,7 +69,7 @@ namespace sfx {
 
             constexpr duration(
                 Repr v = static_cast<Repr>(0),
-                timebase p = timebase(1, 1))
+                timebase p = timebase{ratio(1, 1)})
                 : _value(v), _period(p)
                 {}
             constexpr duration(duration other, timebase p)
@@ -105,6 +105,15 @@ namespace sfx {
                     return {duration(a, b.period()), b};
                 else
                     return {a, duration(b, a.period())};
+            }
+
+            static constexpr duration zero()
+                { return duration(); }
+            static constexpr duration max()
+            {
+                return duration(
+                    std::numeric_limits<repr>::max(), 
+                    ratio(std::numeric_limits<std::intmax_t>::max()));
             }
 
             /** Relational operators **/
@@ -175,6 +184,27 @@ namespace sfx {
 
             Repr     _value;
             timebase _period;
+        };
+
+        template <typename Repr>
+        class timepoint : public
+            strong_type<duration<Repr>, timepoint<Repr>>
+        {
+        public:
+            using baseclass = strong_type<duration<Repr>, timepoint<Repr>>;
+            constexpr timepoint(
+                Repr v = static_cast<Repr>(0),
+                timebase p = timebase())
+                : baseclass{duration<Repr>(v, p)}
+                {}
+            explicit constexpr timepoint(duration<Repr> d)
+                : baseclass{d}
+                {}
+
+            static constexpr timepoint zero()
+                { return {duration<Repr>::zero()}; }
+            static constexpr timepoint max()
+                { return {duration<Repr>::max()}; }
         };
 
         // /* Sync utilities */

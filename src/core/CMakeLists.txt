@@ -1,5 +1,7 @@
 
 add_module(time "")
+add_module(player "time.hpp")
+add_module(event "time.hpp")
 
 # add_executable(TestSyncerInterval interval.hpp tests/interval.cpp)
 # add_test(NAME TestSyncerInterval COMMAND TestSyncerInterval)

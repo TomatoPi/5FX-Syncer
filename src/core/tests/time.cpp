@@ -130,6 +130,17 @@ int main(int argc, char * const argv[])
     BIASSERT(duration(60, 60_bpm) - duration(120, 120_bpm) == duration(0, 60_bpm));
     BIASSERT(duration(0, 60_bpm) - duration(960, 120_bpm) == duration(-240, 30_bpm));
 
+    /* Test timepoint */
+
+    BIASSERT(timepoint(0, 60_bpm) == timepoint(0, 48_kHz));
+
+    constexpr auto _960ppqn_60bpm = 960 * 60_bpm;
+
+    BIASSERT(timepoint(0, _960ppqn_60bpm) == timepoint(0, 48_kHz));
+    BIASSERT(timepoint(1, _960ppqn_60bpm) == timepoint(50, 48_kHz));
+    BIASSERT(timepoint(240, _960ppqn_60bpm) == timepoint(12'000, 48_kHz));
+    BIASSERT(timepoint(960, _960ppqn_60bpm) == timepoint(48'000, 48_kHz));
+
     // /* Test syncronisation utilities */
 
     // using sync_t = syncpoint<tick, frame>;
